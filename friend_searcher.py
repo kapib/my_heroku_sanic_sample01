@@ -86,37 +86,38 @@ def draw_all_network(client):
     graph = 'data:image/png;base64,{}'.format(plot_url)
     return graph
 
-async def wating(delay):
-    await asyncio.sleep(delay)
-
-async def wait_for_task_finished():
-    while True:
-        task1 = asyncio.create_task(wating(0.2))
-        await task1
-        if client.is_completed:
-            return
-
 @app.route('/user/all')
 @jinja2_sanic.template("templates.jinja2")
 async def all_users(request):
     client.clear_data()
-    client.get_all_users_info()
-    await wait_for_task_finished()
+    await client.get_all_users_info([i for i in range(1, 11)])
+    # await wait_for_task_finished()
     graph = draw_all_network(client)
     return {
         "searcher_name": "all network",
         "graph": graph,
     }
 
+@app.route('/test')
+@jinja2_sanic.template("templates.jinja2")
+async def test(request):
+    client.clear_data()
+    results = await client.fetch_users_info_by_id_list([1, 2, 3, 4])
+    for r in results:
+        print(r)
+
+@app.route('/test2/<nth>/<id>')
+@jinja2_sanic.template("templates.jinja2")
+async def test2(request, id, nth):
+    client.clear_data()
+    await client.get_nth_degree_friends_by_id_list([int(id)], int(nth))
+    print("hogeeeeeeee")
+
 @app.route('/user/<nth>/<number>')
 @jinja2_sanic.template("templates.jinja2")
 async def show_user_network(request, nth, number):
     client.clear_data()
-    client.get_nth_degree_friends_by_id_list([number], nth)
-    # task1 = asyncio.create_task(client.get_nth_degree_friends_by_id_list_async([number], nth))
-    await wait_for_task_finished()
-    # await task1
-    # print("task1 result ", task1.result())
+    await client.get_nth_degree_friends_by_id_list([number], int(nth))
 
     graph = draw_network(client)
     if graph == "no friends":
